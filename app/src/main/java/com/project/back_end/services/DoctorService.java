@@ -36,6 +36,23 @@ public class DoctorService {
         return doctorRepository.findAll();
     }
 
+    /** Saves a new doctor. Returns 1 on success, -1 when the email is already used. */
+    public int saveDoctor(Doctor doctor) {
+        if (doctorRepository.findByEmail(doctor.getEmail()) != null) {
+            return -1;
+        }
+        doctorRepository.save(doctor);
+        return 1;
+    }
+
+    /** Case-insensitive partial name search; a blank name returns every doctor. */
+    public List<Doctor> searchByName(String name) {
+        if (name == null || name.isBlank()) {
+            return doctorRepository.findAll();
+        }
+        return doctorRepository.findByNameContainingIgnoreCase(name.trim());
+    }
+
     /**
      * Available slots for a doctor on a date: the doctor's configured slots
      * (e.g. "09:00-10:00") minus the slots already booked that day.

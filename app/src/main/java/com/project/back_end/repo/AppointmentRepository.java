@@ -15,5 +15,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                                                               LocalDateTime start,
                                                               LocalDateTime end);
 
+    // All appointments of one doctor, soonest first
+    List<Appointment> findByDoctorIdOrderByAppointmentTimeAsc(Long doctorId);
+
     List<Appointment> findByPatientId(Long patientId);
 }
