@@ -1,7 +1,7 @@
 package com.project.back_end.controllers;
 
 import com.project.back_end.models.Prescription;
-import com.project.back_end.repositories.PrescriptionRepository;
+import com.project.back_end.repo.PrescriptionRepository;
 import com.project.back_end.services.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
