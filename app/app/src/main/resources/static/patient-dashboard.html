@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Clinic - Patient Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Smart Clinic <span>Patient Portal</span></div>
+    <button class="link" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <h1>Find a Doctor</h1>
+    <p class="sub">Search for a doctor by name.</p>
+
+    <div class="card">
+      <form id="searchForm" class="searchbar">
+        <input id="searchName" placeholder="Type a doctor's name, e.g. Hana" autocomplete="off">
+        <button class="primary inline" type="submit">Search</button>
+      </form>
+
+      <div id="resultInfo" class="sub"></div>
+      <div id="results"></div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    if (requireRole('patient')) {
+      search('');
+
+      document.getElementById('searchForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        search(document.getElementById('searchName').value);
+      });
+    }
+
+    async function search(name) {
+      const result = await getJson('/doctor/search?name=' + encodeURIComponent(name));
+      const doctors = result.ok && result.data ? result.data : [];
+      const info = document.getElementById('resultInfo');
+      const box = document.getElementById('results');
+
+      info.textContent = name.trim()
+        ? doctors.length + ' doctor(s) found for "' + name.trim() + '"'
+        : 'Showing all doctors (' + doctors.length + ')';
+
+      if (doctors.length === 0) {
+        box.innerHTML = '<div class="empty">No doctors match your search.</div>';
+        return;
+      }
+
+      box.innerHTML = doctors.map(d => {
+        const times = (d.availableTimes || []).map(t => '<span class="badge">' + escapeHtml(t) + '</span>').join('');
+        return '<div class="doctor-card"><div>' +
+          '<h3>' + escapeHtml(d.name) + '</h3>' +
+          '<div class="meta">' + escapeHtml(d.specialty) + ' &middot; ' + escapeHtml(d.email) + ' &middot; ' + escapeHtml(d.phone) + '</div>' +
+          '<div>' + times + '</div></div></div>';
+      }).join('');
+    }
+  </script>
+</body>
+</html>

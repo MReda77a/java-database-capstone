@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Clinic - Login</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Smart Clinic <span>Management System</span></div>
+    <a href="/">Home</a>
+  </header>
+
+  <main>
+    <div class="card login-card">
+      <h1 id="title">Login</h1>
+      <p class="sub" id="subtitle">Sign in to continue.</p>
+
+      <form id="loginForm">
+        <label for="identifier" id="identifierLabel">Email</label>
+        <input id="identifier" name="identifier" autocomplete="username" required>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <button class="primary" type="submit">Login</button>
+        <div id="message" class="msg"></div>
+      </form>
+
+      <div class="hint" id="hint"></div>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const role = ['admin', 'doctor', 'patient'].includes(params.get('role')) ? params.get('role') : 'patient';
+
+    const config = {
+      admin:   { title: 'Admin Portal Login',   label: 'Username', hint: 'Demo account: admin / admin123' },
+      doctor:  { title: 'Doctor Portal Login',  label: 'Email',    hint: 'Demo account: hana@test.com / doctor123' },
+      patient: { title: 'Patient Portal Login', label: 'Email',    hint: 'Demo account: ahmed@test.com / patient123' }
+    }[role];
+
+    document.title = 'Smart Clinic - ' + config.title;
+    document.getElementById('title').textContent = config.title;
+    document.getElementById('identifierLabel').textContent = config.label;
+    document.getElementById('hint').textContent = config.hint;
+
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('message');
+      showMessage(message, 'Signing in...', '');
+
+      try {
+        const result = await postJson('/' + role + '/login', {
+          identifier: document.getElementById('identifier').value.trim(),
+          password: document.getElementById('password').value
+        });
+
+        if (result.ok && result.data.token) {
+          saveSession(role, result.data.token);
+          window.location.href = '/' + role + '-dashboard.html';
+        } else {
+          showMessage(message, result.data.message || 'Login failed', 'error');
+        }
+      } catch (e) {
+        showMessage(message, 'Could not reach the server', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

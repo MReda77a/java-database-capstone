@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Clinic - Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Smart Clinic <span>Admin Portal</span></div>
+    <button class="link" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <h1>Admin Dashboard</h1>
+    <p class="sub">Add new doctors to the Smart Clinic Management System.</p>
+
+    <div class="grid-2">
+      <section class="card">
+        <h2 style="margin-top:0">Add Doctor</h2>
+        <form id="doctorForm">
+          <label for="name">Full name</label>
+          <input id="name" required minlength="3" placeholder="Dr. Jane Smith">
+
+          <label for="specialty">Specialty</label>
+          <select id="specialty" required>
+            <option>Cardiology</option>
+            <option>Neurology</option>
+            <option>Dermatology</option>
+            <option>Pediatrics</option>
+            <option>Orthopedics</option>
+            <option>General Medicine</option>
+          </select>
+
+          <label for="email">Email</label>
+          <input id="email" type="email" required placeholder="jane@clinic.com">
+
+          <label for="phone">Phone (10 digits)</label>
+          <input id="phone" required pattern="[0-9]{10}" placeholder="0100000099">
+
+          <label for="password">Password</label>
+          <input id="password" type="password" required minlength="6">
+
+          <label for="times">Available times (comma separated)</label>
+          <input id="times" value="09:00-10:00, 10:00-11:00, 14:00-15:00">
+
+          <button class="primary" type="submit">Add Doctor</button>
+          <div id="message" class="msg"></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin-top:0">Doctors</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Specialty</th><th>Email</th><th>Phone</th></tr></thead>
+          <tbody id="doctorRows"></tbody>
+        </table>
+        <div id="emptyState" class="empty" hidden>No doctors yet.</div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    if (requireRole('admin')) {
+      loadDoctors();
+
+      document.getElementById('doctorForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const message = document.getElementById('message');
+
+        const doctor = {
+          name: document.getElementById('name').value.trim(),
+          specialty: document.getElementById('specialty').value,
+          email: document.getElementById('email').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          password: document.getElementById('password').value,
+          availableTimes: document.getElementById('times').value
+            .split(',').map(t => t.trim()).filter(t => t.length > 0)
+        };
+
+        const result = await postJson('/doctor/' + getToken(), doctor);
+        if (result.ok) {
+          showMessage(message, 'Doctor "' + doctor.name + '" added successfully.', 'ok');
+          event.target.reset();
+          document.getElementById('times').value = '09:00-10:00, 10:00-11:00, 14:00-15:00';
+          loadDoctors();
+        } else {
+          showMessage(message, result.data.message || 'Could not add the doctor', 'error');
+        }
+      });
+    }
+
+    async function loadDoctors() {
+      const result = await getJson('/doctor');
+      const rows = document.getElementById('doctorRows');
+      const doctors = result.ok && result.data ? result.data : [];
+
+      rows.innerHTML = doctors.map(d =>
+        '<tr><td>' + escapeHtml(d.name) + '</td><td>' + escapeHtml(d.specialty) +
+        '</td><td>' + escapeHtml(d.email) + '</td><td>' + escapeHtml(d.phone) + '</td></tr>'
+      ).join('');
+      document.getElementById('emptyState').hidden = doctors.length > 0;
+    }
+  </script>
+</body>
+</html>
